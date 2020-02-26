@@ -1,10 +1,11 @@
 {
-  "name": "DeskCAT-Scanner",
+  "name": "deskcat-scanner",
   "version": "1.0.0",
   "description": "",
   "main": "scanner.js",
   "dependencies": {
-    "google-spreadsheet": "^2.0.3"
+    "google-spreadsheet": "^2.0.3",
+    "googleapis": "^39.2.0"
   },
   "devDependencies": {},
   "scripts": {

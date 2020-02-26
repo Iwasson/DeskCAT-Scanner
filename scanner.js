@@ -19,7 +19,7 @@ client.authorize(function (err, tokens) {
     }
     else {
         console.log("Connected");
-        gsrun(client);
+        getID(client);
     }
 });
 
@@ -27,15 +27,31 @@ client.authorize(function (err, tokens) {
 //will constantly be checking for user input
 async function getID() {
     var stdin = process.openStdin();
-    var date = new Date();
+
+    //will collect user input and then process the input
     stdin.addListener("data", function (d) {
         console.log("you entered: " + d.toString().trim());
-        getCAT(d.toString().trim());
-        var ts = date.getDay() + "/" + date.getMonth() + "/" + date.getFullYear() + ":" + date.getHours()
-        console.log("TimeStamp: " + ts);
+        processInput(d.toString().trim());
     });
 }
 
+//returns the position of the row that the cat was found at
+//also gets a time stamp for the search, this will be used to process clock on and off
+async function processInput(d) {
+    var date = new Date();
+    var pos = 0;
+
+    pos = await getCAT(d.toString().trim());
+    var ts = date.getMonth()+1 + "/" + date.getDate() + "/" + date.getFullYear() + ":" + date.getHours()
+    console.log("TimeStamp: " + ts);
+    console.log(pos);
+
+    updateCAT(pos);
+
+}
+
+
+//returns the row number that CAT is located on
 async function getCAT(id) {
     const gsapi = google.sheets({
         version: 'v4',
@@ -45,7 +61,7 @@ async function getCAT(id) {
     //used to pull information from the spreadsheet
     const opt = {
         spreadsheetId: '1nHmFKFvP-Q_Hez33GSMz_wLvznugLqpDKo2fHmMvcvo', //spreadsheet id
-        range: 'D2:E100'    //value range that we are pulling from (assuming that we dont have more than 100 CATs on desk)
+        range: 'A2:B100'    //value range that we are pulling from (assuming that we dont have more than 100 CATs on desk)
     };
 
     let data = await gsapi.spreadsheets.values.get(opt);
@@ -57,47 +73,96 @@ async function getCAT(id) {
     let found = false;
 
     //parse through the file to find the person who scanned
+    var pos = 2;
     dataArray.forEach(element => {
         if (element[1] == id) {
             console.log(element);
             found = true;
-            return element;
         }
+        if (found == false) { pos += 1; }
     });
     if (found == false) { console.log("Could not find CAT"); }
 
+    return pos;
 }
 
-//pulls data from the spreadsheet and then allows us to update back to the sheet
-//async because we need it to wait until data is recieved and/or pushed 
-async function gsrun(client) {
+//takes the row position and the time stamp
+//will append the timestamp to the correct date row
+async function updateCAT(pos) {
+    //The google spreadsheet has script that I wrote to auto shift 
+    //cells every day and label them accordingly. 
+    //Notify me on Rocket if something bad happens!
 
-    //used to create a new array of information that we can put into the 
-    //spreadsheet
-    /*
-    let newDataArray = dataArray.map(function (r) {
+    //need to check and see if the CAT has clocked on
+    //if the cat has not clocked on (the first cell is blank)
+    //then add the timestamp as the clock on time
+    //  Column    Expected Values
+    //  D         Date mm/dd/yyyy
+    //  E         Clock on time 24h
+    //  F         Clock off time 24h
+    //  G         Hours, difference between E and F
+    var date = new Date();
 
+    var fullDate = date.getMonth()+1 + "/" + date.getDate() + "/" + date.getFullYear();
+    var hour = date.getHours();
+    var clockOn = true;
+    var newRange = 'catids!D' + pos;
+
+    const gsapi = google.sheets({
+        version: 'v4',
+        auth: client
     });
 
-    //updates the data to the spreadsheet
-    let resp = await gsapi.spreadsheets.values.get(opt);
-
-    //used tp push values to the spreadsheet
-    const updateOpt = {
+    //used to pull information from the spreadsheet
+    const opt = {
         spreadsheetId: '1nHmFKFvP-Q_Hez33GSMz_wLvznugLqpDKo2fHmMvcvo', //spreadsheet id
-        range: 'G2',    //starting index to insert from
-        valueInputOption: 'USER_ENTERED',   //how the data is interpreted
-        response: { values: newDataArray }    //tells us if it worked or not
+        range: 'E2:E100'    //value range we are looking at, we need to check E2:E100 to see if there is a clock on time
     };
 
-    */
+    let data = await gsapi.spreadsheets.values.get(opt);
+    dataArray = data.data.values;
 
-    //Need to get date and time for when a cat scanned their barcode
-    //this will rely on the system time
-    //There will be three fields that will be manipulated here
-    //1: clock on timestamp
-    //2: clock off timestamp
-    //3: total time logged (might round it to nearest hour because we dont need to be that strict)
+    dataArray.forEach(element => {
+        if (element == undefined) {
+            console.log("No clock on time, inserting Clock on time");
+            clockOn = false;
+        }
+    });
+
+    if(clockOn == false) {
+        vals = {
+            "range": "catids!D" + pos,
+            "majorDimension": "ROWS",
+            "values": [
+                [fullDate, hour, null, null],
+            ],
+        };
+    }
+    else {
+        vals = {
+            "range": "catids!D" + pos,
+            "majorDimension": "ROWS",
+            "values": [
+                [fullDate, null, hour, null],
+            ],
+        };
+    }
+    
+
+    const updateOptions = {
+        spreadsheetId: '1nHmFKFvP-Q_Hez33GSMz_wLvznugLqpDKo2fHmMvcvo',
+        range: newRange,
+        valueInputOption: 'USER_ENTERED',
+        resource: vals,
+    };
+
+
+
+    let res = await gsapi.spreadsheets.values.update(updateOptions);
+
+    //if the cat has clocked on then write the timestamp to
+    //the second cell, if the cat scans multiple times it will
+    //overwrite this second cell
+    //(unless the cat comes back 5 or 6 hours later and scans out again, this will fix some common timeclock issues)
 
 }
-getID();

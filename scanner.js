@@ -1,6 +1,6 @@
 const { google } = require('googleapis'); //includes the google api
 const keys = require('./keys.json');    //super secret file of log in info
-const readline = require('readline');
+
 
 //creates a new client instance to log into the sheet
 const client = new google.auth.JWT(
@@ -23,21 +23,17 @@ client.authorize(function (err, tokens) {
     }
 });
 
-getID();
+
 //will constantly be checking for user input
 async function getID() {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
+    var stdin = process.openStdin();
+    var date = new Date();
+    stdin.addListener("data", function (d) {
+        console.log("you entered: " + d.toString().trim());
+        getCAT(d.toString().trim());
+        var ts = date.getDay() + "/" + date.getMonth() + "/" + date.getFullYear() + ":" + date.getHours()
+        console.log("TimeStamp: " + ts);
     });
-    
-     rl.question('Scan Id: ', (id) => {
-        // TODO: Log the answer in a database
-        let data = await getCAT(id)
-        console.log(`Data from ID: `);
-    });
-
-    getID();
 }
 
 async function getCAT(id) {
@@ -58,14 +54,18 @@ async function getCAT(id) {
     //assigns a new array of data and inserts values from the spreadsheet
     //to it
     let dataArray = data.data.values;
+    let found = false;
 
     //parse through the file to find the person who scanned
     dataArray.forEach(element => {
         if (element[1] == id) {
             console.log(element);
+            found = true;
             return element;
         }
     });
+    if (found == false) { console.log("Could not find CAT"); }
+
 }
 
 //pulls data from the spreadsheet and then allows us to update back to the sheet
@@ -100,3 +100,4 @@ async function gsrun(client) {
     //3: total time logged (might round it to nearest hour because we dont need to be that strict)
 
 }
+getID();

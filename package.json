@@ -4,6 +4,7 @@
   "description": "",
   "main": "scanner.js",
   "dependencies": {
+    "google": "^2.1.0",
     "google-spreadsheet": "^2.0.3",
     "googleapis": "^39.2.0"
   },

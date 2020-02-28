@@ -121,13 +121,27 @@ async function updateCAT(pos) {
 
     let data = await gsapi.spreadsheets.values.get(opt);
     dataArray = data.data.values;
+
+    if(dataArray[pos-2] == undefined || dataArray[pos-2] == 0)
+    {
+        console.log("No Clock on time");
+        clockOn = false;
+    }
+
+    /*
+    dataArray.forEach(element => {
+        console.log(element);
+    });
+    */
     
+    /*
     dataArray.forEach(element => {
         if (element == 0) {
-            console.log("No clock on time, inserting Clock on time");
+            //console.log("No clock on time, inserting Clock on time");
             clockOn = false;
         }
     });
+    */
 
     
 

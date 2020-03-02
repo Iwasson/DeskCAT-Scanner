@@ -171,7 +171,7 @@ async function updateCAT(pos) {
     let res = await gsapi.spreadsheets.values.update(updateOptions);
 
     console.log("Thank you for scanning your ID!");
-    sleep(2000);
+    sleep(5000);
     console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     console.log("Please Scan your ID...");
 }

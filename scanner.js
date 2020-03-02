@@ -1,6 +1,14 @@
 const { google } = require('googleapis'); //includes the google api
 const keys = require('./keys.json');    //super secret file of log in info
 
+function sleep(milliseconds) {
+    const date = Date.now();
+    let currentDate = null;
+    do {
+      currentDate = Date.now();
+    } while (currentDate - date < milliseconds);
+  }
+
 
 //creates a new client instance to log into the sheet
 const client = new google.auth.JWT(
@@ -26,8 +34,9 @@ client.authorize(function (err, tokens) {
 
 //will constantly be checking for user input
 async function getID() {
+    
     var stdin = process.openStdin();
-
+    console.log("Please Scan your ID...");
     //will collect user input and then process the input
     stdin.addListener("data", function (d) {
         console.log("you entered: " + d.toString().trim());
@@ -44,7 +53,7 @@ async function processInput(d) {
     pos = await getCAT(d.toString().trim());
     var ts = date.getMonth()+1 + "/" + date.getDate() + "/" + date.getFullYear() + ":" + date.getHours()
     console.log("TimeStamp: " + ts);
-    console.log(pos);
+    //console.log(pos);
 
     updateCAT(pos);
 
@@ -124,28 +133,12 @@ async function updateCAT(pos) {
 
     if(dataArray[pos-2] == undefined || dataArray[pos-2] == 0)
     {
-        console.log("No Clock on time");
         clockOn = false;
     }
 
-    /*
-    dataArray.forEach(element => {
-        console.log(element);
-    });
-    */
-    
-    /*
-    dataArray.forEach(element => {
-        if (element == 0) {
-            //console.log("No clock on time, inserting Clock on time");
-            clockOn = false;
-        }
-    });
-    */
-
-    
-
     if(clockOn == false) {
+        console.log("Clocking You on!");
+        
         vals = {
             "range": "catids!D" + pos,
             "majorDimension": "ROWS",
@@ -155,6 +148,7 @@ async function updateCAT(pos) {
         };
     }
     else {
+        console.log("Clocking You off!");
         vals = {
             "range": "catids!D" + pos,
             "majorDimension": "ROWS",
@@ -176,9 +170,8 @@ async function updateCAT(pos) {
 
     let res = await gsapi.spreadsheets.values.update(updateOptions);
 
-    //if the cat has clocked on then write the timestamp to
-    //the second cell, if the cat scans multiple times it will
-    //overwrite this second cell
-    //(unless the cat comes back 5 or 6 hours later and scans out again, this will fix some common timeclock issues)
-
+    console.log("Thank you for scanning your ID!");
+    sleep(2000);
+    console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    console.log("Please Scan your ID...");
 }

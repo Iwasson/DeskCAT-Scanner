@@ -42,7 +42,7 @@ async function getID() {
         console.log("you entered: " + d.toString().trim());
         processInput(d.toString().trim());
     });
-}
+}           
 
 //returns the position of the row that the cat was found at
 //also gets a time stamp for the search, this will be used to process clock on and off
@@ -84,7 +84,7 @@ async function getCAT(id) {
     //parse through the file to find the person who scanned
     var pos = 2;
     dataArray.forEach(element => {
-        if (element[1] == id) {
+        if (element[1] == id) {           
             console.log(element);
             found = true;
         }
